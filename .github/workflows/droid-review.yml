@@ -10,23 +10,24 @@ concurrency:
 
 jobs:
   droid-review:
-    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository && !endsWith(github.actor, '[bot]')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
       issues: write
-      id-token: write
       actions: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
           persist-credentials: false
       - name: Run Droid Auto Review
         uses: Factory-AI/droid-action@e3d1f5e7861c36fe4a9c4dca3edec87b964b2bc4
         with:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
+          github_token: ${{ github.token }}
           automatic_review: true
           automatic_security_review: true
