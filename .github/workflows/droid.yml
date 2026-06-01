@@ -15,11 +15,22 @@ on:
 jobs:
   droid:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@droid')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@droid')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@droid')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@droid') || contains(github.event.issue.title, '@droid'))) ||
-      (github.event_name == 'pull_request' && (contains(github.event.pull_request.body, '@droid') || contains(github.event.pull_request.title, '@droid')))
+      (
+        !endsWith(github.actor, '[bot]')
+      ) &&
+      (
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) ||
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association) ||
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) ||
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      ) &&
+      (
+        (github.event_name == 'issue_comment' && contains(format(' {0} ', github.event.comment.body), ' @droid ')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(format(' {0} ', github.event.comment.body), ' @droid ')) ||
+        (github.event_name == 'pull_request_review' && contains(format(' {0} ', github.event.review.body), ' @droid ')) ||
+        (github.event_name == 'issues' && github.event.action == 'opened' && (contains(format(' {0} ', github.event.issue.body), ' @droid ') || contains(format(' {0} ', github.event.issue.title), ' @droid '))) ||
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (contains(format(' {0} ', github.event.pull_request.body), ' @droid ') || contains(format(' {0} ', github.event.pull_request.title), ' @droid ')))
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,7 +43,8 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
+          persist-credentials: false
       - name: Run Droid Exec
-        uses: Factory-AI/droid-action@main
+        uses: Factory-AI/droid-action@v5
         with:
           factory_api_key: ${{ secrets.FACTORY_API_KEY }}
